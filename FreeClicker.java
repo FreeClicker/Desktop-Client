@@ -7,6 +7,10 @@ import org.json.simple.JSONArray;
 import org.json.simple.parser.ParseException;
 import org.json.simple.parser.JSONParser;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.ArrayList;
@@ -21,6 +25,7 @@ public class FreeClicker {
     private static int[] results = new int[5];
     private static ViewBar vb = new ViewBar();
     private static int numVotes = 0;
+    private static String chartPage = "";
 
     private static void updateLists(String user, String option) {
 
@@ -83,19 +88,36 @@ public class FreeClicker {
         vb.timeLabel.setText("0:00");
     }
 
-    public static void main(String ar[]) {
+    public static void main(String ar[]) throws IOException {
 
         newQuestion();
 
         JSONParser parser = new JSONParser();
         Random r = new Random();
         int port = 1000 + r.nextInt(64535);
-        String roomName = "Get some yellow pungent snacks";
+        String roomName = "CS 182";
 
 
 
         setIpAddress("0.0.0.0");
         setPort(port);
+
+        try {
+            FileReader fr = new FileReader("chart.html");
+            BufferedReader br = new BufferedReader(fr);
+            String S;
+            while((S=br.readLine())!=null) {
+                if(S.indexOf("%%IPPORT%%")!=-1)
+                    S = S.replace("%%IPPORT%%", "localhost:"+port);
+                chartPage += S+"\n";
+            }
+
+            br.close();
+            fr.close();
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
 
         try {
             DatagramSocket ds = new DatagramSocket();
@@ -112,7 +134,7 @@ public class FreeClicker {
             return S;
         });
 
-        get("/", (req, res) -> "Get the fuck out of this page");
+        get("/", (req, res) -> chartPage);
 
         post("/answer/", (req, res) -> {
             try {
