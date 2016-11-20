@@ -44,7 +44,7 @@ public class QRScreen {
                     fxPanel.setScene ( new Scene( wv, 400, 500 ) );
                     frame = new JFrame ( "Join the session" );
                     frame.add ( new JScrollPane ( fxPanel ) );
-                    frame.setDefaultCloseOperation ( JFrame.EXIT_ON_CLOSE );
+                    frame.setDefaultCloseOperation ( JFrame.DISPOSE_ON_CLOSE);
                     frame.setVisible ( true );
                     frame.pack ();
                 }

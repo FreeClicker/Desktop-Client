@@ -3,19 +3,91 @@
  */
 
 
+import org.json.simple.JSONArray;
+import org.json.simple.parser.ParseException;
+import org.json.simple.parser.JSONParser;
+
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Random;
 
 import static spark.Spark.*;
 
 public class FreeClicker {
 
+    private static ArrayList<String> users = new ArrayList<>();
+    private static ArrayList<String> options = new ArrayList<>();
+    private static int[] results = new int[5];
+    private static ViewBar vb = new ViewBar();
+    private static int numVotes = 0;
 
+    private static void updateLists(String user, String option) {
+
+        System.out.print("\nUsers in list: ");
+        for(int i = 0;i<users.size();i++)
+            System.out.print(users.get(i)+" ");
+        System.out.println();
+
+        if(users==null || users.size()==0) {
+            users.add(user);
+            options.add(option);
+            numVotes++;
+            vb.numVotesLabel.setText(""+numVotes);
+
+            if(option.equalsIgnoreCase("A")) results[0]++;
+            else if(option.equalsIgnoreCase("B")) results[1]++;
+            else if(option.equalsIgnoreCase("C")) results[2]++;
+            else if(option.equalsIgnoreCase("D")) results[3]++;
+            else if(option.equalsIgnoreCase("E")) results[4]++;
+        }
+        else {
+            for(int i = 0;i<users.size();i++) {
+                if(users.get(i).equals(user)) {
+                    String coption = options.get(i);
+                    System.out.println("Current Option: "+coption+" Current user: "+users.get(i));
+                    options.set(i, option);
+                    if(option.equalsIgnoreCase("A")) results[0]++;
+                    else if(option.equalsIgnoreCase("B")) results[1]++;
+                    else if(option.equalsIgnoreCase("C")) results[2]++;
+                    else if(option.equalsIgnoreCase("D")) results[3]++;
+                    else if(option.equalsIgnoreCase("E")) results[4]++;
+
+                    if(coption.equalsIgnoreCase("A")) results[0]--;
+                    else if(coption.equalsIgnoreCase("B")) results[1]--;
+                    else if(coption.equalsIgnoreCase("C")) results[2]--;
+                    else if(coption.equalsIgnoreCase("D")) results[3]--;
+                    else if(coption.equalsIgnoreCase("E")) results[4]--;
+                    return;
+                }
+            }
+
+            users.add(user);
+            options.add(option);
+            numVotes++;
+            vb.numVotesLabel.setText(""+numVotes);
+            if(option.equalsIgnoreCase("A")) results[0]++;
+            else if(option.equalsIgnoreCase("B")) results[1]++;
+            else if(option.equalsIgnoreCase("C")) results[2]++;
+            else if(option.equalsIgnoreCase("D")) results[3]++;
+            else if(option.equalsIgnoreCase("E")) results[4]++;
+        }
+    }
+
+    private static void newQuestion() {
+        results[0] = results[1] = results[2] = results[3] = results[4] = 0;
+        users = new ArrayList<>();
+        options = new ArrayList<>();
+        vb.numVotesLabel.setText("0");
+        numVotes = 0;
+        vb.timeLabel.setText("0:00");
+    }
 
     public static void main(String ar[]) {
 
+        newQuestion();
+
+        JSONParser parser = new JSONParser();
         Random r = new Random();
         int port = 1000 + r.nextInt(64535);
         String roomName = "Get some yellow pungent snacks";
@@ -35,17 +107,22 @@ public class FreeClicker {
         }
 
 
-        get("/hello", (req, res) -> {
-            System.out.println(req.port());
-            return "Hello World";
+        get("/results", (req, res) -> {
+            String S = String.format("[%d,%d,%d,%d,%d]",results[0], results[1], results[2], results[3], results[4]);
+            return S;
         });
 
         get("/", (req, res) -> "Get the fuck out of this page");
 
         post("/answer/", (req, res) -> {
-           System.out.println(req.body());
-            System.out.println(req);
-            System.out.println(req.contentLength());
+            try {
+                Object obj = parser.parse(req.body());
+                JSONArray array = (JSONArray)obj;
+                updateLists((String)array.get(0), (String)array.get(1));
+                System.out.println((String)array.get(0)+": "+(String)array.get(1));
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
             return "success";
         });
     }
